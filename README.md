@@ -4,9 +4,9 @@
 
 Perfect for streamers who want to hear chat messages without looking away from gameplay.
 
-[![Release](https://img.shields.io/github/v/release/CaedVT/Chat-TTS-Reader?include_prereleases)](https://github.com/caedicious/Chat-TTS-Reader/releases/)
-[![Downloads](https://img.shields.io/github/downloads/CaedVT/Chat-TTS-Reader/total)](https://github.com/CaedVT/Chat-TTS-Reader/releases)
-[![License](https://img.shields.io/github/license/CaedVT/Chat-TTS-Reader)](LICENSE.txt)
+[![Release](https://img.shields.io/github/v/release/caedicious/Chat-TTS-Reader?include_prereleases)](https://github.com/caedicious/Chat-TTS-Reader/releases/)
+[![Downloads](https://img.shields.io/github/downloads/caedicious/Chat-TTS-Reader/total)](https://github.com/caedicious/Chat-TTS-Reader/releases)
+[![License](https://img.shields.io/github/license/caedicious/Chat-TTS-Reader)](LICENSE.txt)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 
 <p align="center">
