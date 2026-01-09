@@ -1,0 +1,35 @@
+# Chat TTS Reader Dependencies
+
+# TTS Engine
+pyttsx3>=2.90
+edge-tts>=6.1.9
+
+# YouTube Live Chat
+pytchat>=0.5.5
+
+# TikTok Live Chat
+TikTokLive>=6.0.0
+
+# Kick Chat (WebSocket based)
+websockets>=12.0
+
+# Async utilities
+aiohttp>=3.9.0
+asyncio-atexit>=1.0.1
+
+# Configuration & Security
+keyring>=25.0.0
+cryptography>=42.0.0
+python-dotenv>=1.0.0
+
+# Utilities
+colorama>=0.4.6
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Additional dependencies
+brotli>=1.1.0
+nest_asyncio>=1.6.0
+
+# Audio playback with device selection
+pygame>=2.5.0

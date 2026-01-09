@@ -1,0 +1,117 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build executables
+      run: |
+        # Main app
+        pyinstaller --clean --noconfirm `
+          --name "ChatTTSReader" `
+          --console `
+          --add-data "platforms;platforms" `
+          --add-data "config.py;." `
+          --add-data "tts_engine.py;." `
+          --hidden-import "pyttsx3.drivers.sapi5" `
+          --hidden-import "pygame" `
+          --hidden-import "keyring.backends.Windows" `
+          --hidden-import "edge_tts" `
+          --hidden-import "aiohttp" `
+          --hidden-import "websockets" `
+          --hidden-import "brotli" `
+          --hidden-import "nest_asyncio" `
+          main.py
+        
+        # Configure
+        pyinstaller --clean --noconfirm `
+          --name "Configure" `
+          --console `
+          --add-data "config.py;." `
+          --add-data "platforms/youtube.py;platforms" `
+          --add-data "platforms/__init__.py;platforms" `
+          --hidden-import "keyring.backends.Windows" `
+          configure.py
+        
+        # Audio test
+        pyinstaller --clean --noconfirm `
+          --name "AudioTest" `
+          --console `
+          --add-data "tts_engine.py;." `
+          --hidden-import "pyttsx3.drivers.sapi5" `
+          --hidden-import "pygame" `
+          --hidden-import "edge_tts" `
+          audio_test.py
+        
+        # Wait for live
+        pyinstaller --clean --noconfirm `
+          --name "WaitForLive" `
+          --console `
+          --add-data "platforms;platforms" `
+          --add-data "config.py;." `
+          --add-data "tts_engine.py;." `
+          --add-data "main.py;." `
+          --hidden-import "pyttsx3.drivers.sapi5" `
+          --hidden-import "pygame" `
+          --hidden-import "keyring.backends.Windows" `
+          --hidden-import "edge_tts" `
+          --hidden-import "aiohttp" `
+          --hidden-import "websockets" `
+          --hidden-import "brotli" `
+          --hidden-import "nest_asyncio" `
+          wait_for_live.py
+    
+    - name: Merge build outputs
+      run: |
+        New-Item -ItemType Directory -Path "release/ChatTTSReader" -Force
+        Copy-Item -Path "dist/ChatTTSReader/*" -Destination "release/ChatTTSReader" -Recurse -Force
+        Copy-Item -Path "dist/Configure/Configure.exe" -Destination "release/ChatTTSReader" -Force
+        Copy-Item -Path "dist/AudioTest/AudioTest.exe" -Destination "release/ChatTTSReader" -Force
+        Copy-Item -Path "dist/WaitForLive/WaitForLive.exe" -Destination "release/ChatTTSReader" -Force
+        Copy-Item -Path "README.md" -Destination "release/ChatTTSReader" -Force
+        Copy-Item -Path "LICENSE.txt" -Destination "release/ChatTTSReader" -Force
+    
+    - name: Create portable ZIP
+      run: |
+        Compress-Archive -Path "release/ChatTTSReader" -DestinationPath "ChatTTSReader-Portable-${{ github.ref_name }}.zip"
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ChatTTSReader-Portable
+        path: ChatTTSReader-Portable-*.zip
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ChatTTSReader-Portable-*.zip
+        draft: true
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

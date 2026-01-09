@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# PyInstaller
+build/dist/
+build/build/
+build/installer_output/
+*.spec
+
+# Inno Setup output
+*.exe
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Config (user-specific)
+.chat-tts-reader/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
