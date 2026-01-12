@@ -33,3 +33,6 @@ nest_asyncio>=1.6.0
 
 # Audio playback with device selection
 pygame>=2.5.0
+
+# Browser automation for Kick login
+undetected-chromedriver>=3.5.0

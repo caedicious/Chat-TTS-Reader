@@ -96,6 +96,7 @@ if (-not $SkipPyInstaller) {
         --add-data "platforms;platforms" `
         --add-data "config.py;." `
         --add-data "tts_engine.py;." `
+        --add-data "kick_auth.py;." `
         --hidden-import "pyttsx3.drivers.sapi5" `
         --hidden-import "pygame" `
         --hidden-import "keyring.backends.Windows" `
@@ -113,11 +114,25 @@ if (-not $SkipPyInstaller) {
         --name "Configure" `
         --console `
         --add-data "config.py;." `
+        --add-data "kick_auth.py;." `
         --add-data "platforms/youtube.py;platforms" `
         --add-data "platforms/__init__.py;platforms" `
         --hidden-import "keyring.backends.Windows" `
+        --hidden-import "undetected_chromedriver" `
         --distpath "$DistDir" `
         configure.py
+    
+    # Build Kick Login
+    Write-Host "  Building KickLogin.exe..." -ForegroundColor Gray
+    & pyinstaller --clean --noconfirm `
+        --name "KickLogin" `
+        --console `
+        --add-data "kick_auth.py;." `
+        --hidden-import "keyring.backends.Windows" `
+        --hidden-import "undetected_chromedriver" `
+        --distpath "$DistDir" `
+        -c -y `
+        kick_auth.py
     
     # Build audio test
     Write-Host "  Building AudioTest.exe..." -ForegroundColor Gray
@@ -161,6 +176,7 @@ if (-not $SkipPyInstaller) {
     # Copy all unique files
     Get-ChildItem -Path "$DistDir\ChatTTSReader" -Recurse | Copy-Item -Destination $FinalDist -Force
     Copy-Item -Path "$DistDir\Configure\Configure.exe" -Destination $FinalDist -Force
+    Copy-Item -Path "$DistDir\KickLogin\KickLogin.exe" -Destination $FinalDist -Force
     Copy-Item -Path "$DistDir\AudioTest\AudioTest.exe" -Destination $FinalDist -Force
     Copy-Item -Path "$DistDir\WaitForLive\WaitForLive.exe" -Destination $FinalDist -Force
     

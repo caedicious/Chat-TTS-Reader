@@ -12,7 +12,15 @@ env/
 build/dist/
 build/build/
 build/installer_output/
+build/AudioTest/
+build/ChatTTSReader/
+build/Configure/
+build/WaitForLive/
+build/KickLogin/
+
+# PyInstaller generated spec files (keep build_all.spec)
 *.spec
+!build/build_all.spec
 
 # Inno Setup output
 *.exe

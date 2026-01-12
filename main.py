@@ -56,17 +56,37 @@ class ChatTTSReader:
         handlers = []
         
         # YouTube handler
-        if self.config.youtube.enabled and self.config.youtube.video_id:
-            video_id = extract_video_id(self.config.youtube.video_id)
+        if self.config.youtube.enabled:
+            video_id = None
+            
+            # First try the configured video ID
+            if self.config.youtube.video_id:
+                video_id = extract_video_id(self.config.youtube.video_id)
+            
+            # If no video ID but channel is set, try to auto-detect
+            if not video_id and self.config.youtube.channel:
+                logger.info(f"Auto-detecting live stream for channel: {self.config.youtube.channel}")
+                from platforms.youtube import get_live_video_id_sync
+                video_id = get_live_video_id_sync(self.config.youtube.channel)
+                if video_id:
+                    logger.info(f"Found live stream: {video_id}")
+                else:
+                    logger.warning(f"No live stream found for channel: {self.config.youtube.channel}")
+            
             if video_id:
                 handlers.append(YouTubeChatHandler(video_id))
                 logger.info(f"YouTube handler configured: {video_id}")
-            else:
+            elif self.config.youtube.video_id:
                 logger.warning(f"Invalid YouTube video ID: {self.config.youtube.video_id}")
+            elif self.config.youtube.channel:
+                logger.warning(f"Could not find live stream for: {self.config.youtube.channel}")
         
         # Kick handler
         if self.config.kick.enabled and self.config.kick.channel_name:
-            handlers.append(KickChatHandler(self.config.kick.channel_name))
+            handlers.append(KickChatHandler(
+                self.config.kick.channel_name,
+                chatroom_id=self.config.kick.chatroom_id
+            ))
             logger.info(f"Kick handler configured: {self.config.kick.channel_name}")
         
         # TikTok handler

@@ -136,7 +136,19 @@ def configure_kick(config_manager: ConfigManager) -> KickConfig:
     
     config = config_manager.config.kick
     
-    enabled = get_bool("Enable Kick chat?", config.enabled)
+    # Check for stored credentials
+    try:
+        from kick_auth import get_stored_cookies
+        has_cookies = bool(get_stored_cookies())
+        if has_cookies:
+            print(f"{Fore.GREEN}✓ Kick login credentials found{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.YELLOW}⚠ No Kick login - may get blocked by Cloudflare{Style.RESET_ALL}")
+            print(f"  Tip: Select 'Login to Kick' from the main menu for better reliability")
+    except ImportError:
+        has_cookies = False
+    
+    enabled = get_bool("\nEnable Kick chat?", config.enabled)
     
     if not enabled:
         return KickConfig(enabled=False)
@@ -293,6 +305,14 @@ def show_current_config(config_manager: ConfigManager):
     print(f"  Enabled: {config.kick.enabled}")
     print(f"  Channel: {config.kick.channel_name or '(not set)'}")
     
+    # Check for Kick login
+    try:
+        from kick_auth import get_stored_cookies
+        has_cookies = bool(get_stored_cookies())
+        print(f"  Login: {'✓ Logged in' if has_cookies else '✗ Not logged in'}")
+    except ImportError:
+        pass
+    
     print(f"\n{Fore.MAGENTA}TikTok:{Style.RESET_ALL}")
     print(f"  Enabled: {config.tiktok.enabled}")
     print(f"  Username: {config.tiktok.username or '(not set)'}")
@@ -318,12 +338,28 @@ def main():
     print("  1. Quick setup (platforms only)")
     print("  2. Full configuration")
     print("  3. View current configuration")
-    print("  4. Exit")
+    print(f"  4. {Fore.GREEN}Login to Kick{Style.RESET_ALL} (browser-based)")
+    print("  5. Exit")
     
     choice = get_input("\nSelect option", "1")
     
-    if choice == "4":
+    if choice == "5":
         return
+    
+    if choice == "4":
+        # Kick login
+        try:
+            from kick_auth import interactive_login
+            interactive_login()
+            if get_bool("\nContinue to configure platforms?", True):
+                choice = "1"
+            else:
+                return
+        except ImportError as e:
+            print(f"{Fore.RED}Error: Could not load Kick auth module: {e}{Style.RESET_ALL}")
+            print("Make sure selenium and webdriver-manager are installed:")
+            print("  pip install selenium webdriver-manager")
+            return
     
     if choice == "3":
         show_current_config(config_manager)

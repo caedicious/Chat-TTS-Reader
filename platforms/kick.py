@@ -5,7 +5,7 @@ import json
 import logging
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 
 import aiohttp
 import websockets
@@ -15,55 +15,97 @@ from .base import BaseChatHandler, ChatMessage
 logger = logging.getLogger(__name__)
 
 
+def get_kick_cookies() -> Dict[str, str]:
+    """Get stored Kick cookies."""
+    try:
+        from kick_auth import get_stored_cookies
+        return get_stored_cookies() or {}
+    except ImportError:
+        return {}
+
+
 class KickChatHandler(BaseChatHandler):
     """
     Handler for Kick.com chat using WebSockets.
     
     Kick uses Pusher for their WebSocket connections.
-    This handler connects to the public chat without authentication.
+    This handler can use authenticated cookies if available.
     """
     
     # Kick's Pusher WebSocket endpoint
     PUSHER_URL = "wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0&flash=false"
     
-    def __init__(self, channel_name: str):
+    def __init__(self, channel_name: str, chatroom_id: Optional[int] = None):
         """
         Initialize Kick chat handler.
         
         Args:
             channel_name: The Kick channel name (username)
+            chatroom_id: Optional chatroom ID (skips API lookup if provided)
         """
         super().__init__("Kick")
         self.channel_name = channel_name.lower()
         self._ws: Optional[websockets.WebSocketClientProtocol] = None
         self._channel_id: Optional[int] = None
-        self._chatroom_id: Optional[int] = None
+        self._chatroom_id: Optional[int] = chatroom_id
+        self._cookies: Dict[str, str] = {}
         
     async def _get_channel_info(self) -> bool:
         """Fetch channel and chatroom IDs from Kick."""
-        # Try multiple methods to get channel info
         
-        # Method 1: Try the v1 API (sometimes less restricted)
+        # If chatroom_id was provided, skip the lookup
+        if self._chatroom_id:
+            logger.info(f"Using provided chatroom ID: {self._chatroom_id}")
+            return True
+        
+        # Get stored cookies for authenticated requests
+        self._cookies = get_kick_cookies()
+        has_cookies = bool(self._cookies)
+        
+        if has_cookies:
+            logger.info("Using stored Kick credentials for API requests")
+        
+        # Build cookie header string
+        cookie_header = "; ".join([f"{k}={v}" for k, v in self._cookies.items()]) if has_cookies else ""
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Referer': 'https://kick.com/',
+            'Origin': 'https://kick.com',
+            'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+        }
+        
+        if cookie_header:
+            headers['Cookie'] = cookie_header
+        
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache',
-                'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Ch-Ua-Platform': '"Windows"',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Sec-Fetch-User': '?1',
-                'Upgrade-Insecure-Requests': '1',
-            }
-            
             async with aiohttp.ClientSession() as session:
-                # First try v1 API
+                # Try v2 API first (more common)
+                url = f"https://kick.com/api/v2/channels/{self.channel_name}"
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        self._channel_id = data.get('id')
+                        self._chatroom_id = data.get('chatroom', {}).get('id')
+                        if self._chatroom_id:
+                            logger.info(f"Kick channel info (v2): id={self._channel_id}, chatroom={self._chatroom_id}")
+                            return True
+                    elif response.status == 403:
+                        logger.warning(f"Kick API returned 403 (blocked)")
+                        if not has_cookies:
+                            logger.info("Try logging in to Kick: run kick_auth.py")
+                    else:
+                        logger.warning(f"Kick API v2 returned {response.status}")
+                
+                # Try v1 API
                 url = f"https://kick.com/api/v1/channels/{self.channel_name}"
                 async with session.get(url, headers=headers) as response:
                     if response.status == 200:
@@ -74,20 +116,7 @@ class KickChatHandler(BaseChatHandler):
                             logger.info(f"Kick channel info (v1): id={self._channel_id}, chatroom={self._chatroom_id}")
                             return True
                 
-                # Try v2 API
-                url = f"https://kick.com/api/v2/channels/{self.channel_name}"
-                async with session.get(url, headers=headers) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        self._channel_id = data.get('id')
-                        self._chatroom_id = data.get('chatroom', {}).get('id')
-                        if self._chatroom_id:
-                            logger.info(f"Kick channel info (v2): id={self._channel_id}, chatroom={self._chatroom_id}")
-                            return True
-                    else:
-                        logger.warning(f"Kick API returned {response.status}")
-                
-                # Method 2: Scrape the main page for embedded data
+                # Method 3: Scrape the main page for embedded data
                 url = f"https://kick.com/{self.channel_name}"
                 async with session.get(url, headers=headers) as response:
                     if response.status == 200:
@@ -106,7 +135,7 @@ class KickChatHandler(BaseChatHandler):
                             self._chatroom_id = int(match.group(1))
                             logger.info(f"Kick chatroom ID from pattern: {self._chatroom_id}")
                             return True
-                            
+                
                 logger.error("Could not find Kick chatroom ID")
                 return False
                 
@@ -128,10 +157,8 @@ class KickChatHandler(BaseChatHandler):
                 self.PUSHER_URL,
                 ping_interval=30,
                 ping_timeout=10,
-                extra_headers={
-                    'Origin': 'https://kick.com',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
+                origin='https://kick.com',
+                user_agent_header='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             )
             
             # Wait for connection established message

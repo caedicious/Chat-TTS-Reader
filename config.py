@@ -24,6 +24,7 @@ class YouTubeConfig:
     """YouTube Live configuration."""
     enabled: bool = True
     video_id: str = ""  # The live stream video ID (from URL)
+    channel: str = ""  # Channel handle (@username) for auto-detection
     
     
 @dataclass
@@ -31,6 +32,7 @@ class KickConfig:
     """Kick.com configuration."""
     enabled: bool = True
     channel_name: str = ""  # Your Kick channel name
+    chatroom_id: Optional[int] = None  # Optional: bypass API lookup
     
 
 @dataclass

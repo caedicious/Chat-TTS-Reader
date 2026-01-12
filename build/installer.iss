@@ -4,7 +4,7 @@
 #define MyAppName "Chat TTS Reader"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "CaedVT"
-#define MyAppURL "https://github.com/CaedVT/Chat-TTS-Reader"
+#define MyAppURL "https://github.com/caedicious/Chat-TTS-Reader"
 #define MyAppExeName "ChatTTSReader.exe"
 
 [Setup]
@@ -64,6 +64,7 @@ Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; Start Menu
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Configure"; Filename: "{app}\Configure.exe"
+Name: "{group}\Kick Login"; Filename: "{app}\KickLogin.exe"
 Name: "{group}\Audio Test"; Filename: "{app}\AudioTest.exe"
 Name: "{group}\Wait For Live"; Filename: "{app}\WaitForLive.exe"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"

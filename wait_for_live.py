@@ -152,27 +152,65 @@ async def check_if_live_scrape(username: str) -> bool:
 
 
 async def wait_for_live(client_id: str, username: str, check_interval: int = 30):
-    """Wait until the user goes live on Twitch."""
+    """Wait until the user goes live on Twitch, or user types bypass."""
+    import threading
+    import queue
+    
+    # Queue for input from user
+    input_queue = queue.Queue()
+    bypass_triggered = threading.Event()
+    
+    def input_listener():
+        """Listen for user input in a separate thread."""
+        while not bypass_triggered.is_set():
+            try:
+                user_input = input()
+                input_queue.put(user_input)
+                if user_input.lower() in ['start', 'go', 's', 'g', '']:
+                    bypass_triggered.set()
+                    break
+            except EOFError:
+                break
+    
+    # Start input listener thread
+    input_thread = threading.Thread(target=input_listener, daemon=True)
+    input_thread.start()
+    
     print(f"\n⏳ Waiting for {username} to go live on Twitch...")
-    print(f"   Checking every {check_interval} seconds. Press Ctrl+C to cancel.\n")
+    print(f"   Checking every {check_interval} seconds.")
+    print(f"\n   Press ENTER or type 'start' to bypass and start immediately.\n")
     
     while True:
         try:
+            # Check if bypass was triggered
+            if bypass_triggered.is_set():
+                print(f"\n⚡ Bypass activated! Starting immediately...")
+                return True
+            
             is_live = await check_if_live_api(client_id, username)
             
             if is_live:
                 print(f"\n🔴 {username} is LIVE!")
+                bypass_triggered.set()  # Stop the input thread
                 return True
             else:
                 timestamp = datetime.now().strftime("%H:%M:%S")
-                print(f"   [{timestamp}] Not live yet...", end='\r')
-                await asyncio.sleep(check_interval)
+                print(f"   [{timestamp}] Not live yet... (Press ENTER to start anyway)", end='\r')
+                
+                # Wait with small intervals to check for bypass
+                for _ in range(check_interval):
+                    if bypass_triggered.is_set():
+                        print(f"\n⚡ Bypass activated! Starting immediately...")
+                        return True
+                    await asyncio.sleep(1)
                 
         except asyncio.CancelledError:
             print("\n\nCancelled.")
+            bypass_triggered.set()
             return False
         except KeyboardInterrupt:
             print("\n\nCancelled.")
+            bypass_triggered.set()
             return False
 
 

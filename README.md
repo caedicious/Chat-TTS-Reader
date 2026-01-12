@@ -4,16 +4,16 @@
 
 Perfect for streamers who want to hear chat messages without looking away from gameplay.
 
-[![Release](https://img.shields.io/github/v/release/caedicious/Chat-TTS-Reader?include_prereleases)](https://github.com/caedicious/Chat-TTS-Reader/releases/)
+[![Release](https://img.shields.io/github/v/release/caedicious/Chat-TTS-Reader?include_prereleases)](https://github.com/caedicious/Chat-TTS-Reader/releases)
 [![Downloads](https://img.shields.io/github/downloads/caedicious/Chat-TTS-Reader/total)](https://github.com/caedicious/Chat-TTS-Reader/releases)
 [![License](https://img.shields.io/github/license/caedicious/Chat-TTS-Reader)](LICENSE.txt)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Twitch-9146FF?style=for-the-badge&logo=twitch&logoColor=white" alt="Twitch"/>
   <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube"/>
   <img src="https://img.shields.io/badge/Kick-53FC18?style=for-the-badge&logo=kick&logoColor=black" alt="Kick"/>
   <img src="https://img.shields.io/badge/TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white" alt="TikTok"/>
+  <img src="https://img.shields.io/badge/Twitch-9146FF?style=for-the-badge&logo=twitch&logoColor=white" alt="Twitch"/>
 </p>
 
 ---
@@ -24,41 +24,89 @@ Perfect for streamers who want to hear chat messages without looking away from g
 - 🔊 **High-Quality TTS** - Choose between Windows SAPI voices or Microsoft Edge neural voices
 - 🎯 **Smart Filtering** - Filter by message length, ignore commands/links, block users/words
 - ⏰ **Auto-Start** - Optionally wait for your Twitch stream to go live before starting
-- 🔒 **Secure** - API keys stored in Windows Credential Manager
+- 🚀 **One-Click Setup** - Complete setup wizard handles everything
+- 🔒 **Secure** - Credentials stored safely in Windows Credential Manager
 - 📦 **Portable** - No system-wide installation required
 
 ---
 
-## Installation Options
+## Quick Start (One-Click Setup)
 
-### Option 1: Windows Installer (Recommended)
+### Requirements
+- Windows 10/11
+- [Python 3.10+](https://www.python.org/downloads/) (check "Add to PATH" during install)
 
-Download `ChatTTSReader-Setup-x.x.x.exe` from the [Releases](../../releases) page.
+### Setup
 
-- No Python required
-- Start menu shortcuts
-- Auto-update options
-- Proper uninstaller
+1. **Download** the latest release from [Releases](../../releases)
+2. **Extract** to any folder
+3. **Run `Setup.bat`**
 
-### Option 2: Portable (Python Required)
-
-If you have Python 3.10+ installed:
-
-1. Download the source and extract anywhere
-2. Double-click `install.bat`
-3. Follow the prompts
-
-### Option 3: Build From Source
-
-See [BUILD.md](BUILD.md) for compilation instructions.
+That's it! The setup wizard will guide you through:
+- Installing all dependencies
+- Configuring your platforms (YouTube, Kick, TikTok)
+- Setting up Twitch live detection (optional)
+- Adding to Windows startup (optional)
 
 ---
 
-## Usage
+## After Setup
 
-### Starting Manually
+### Starting the App
 
-Double-click **`start-chat-tts.bat`**
+- **Manual start:** Double-click `start-chat-tts.bat`
+- **Auto-start:** If configured, it runs when Windows starts (or when you go live on Twitch)
+
+### Reconfiguring
+
+Run `Setup.bat` again to change any settings.
+
+### Quick Config Edit
+
+Edit `%USERPROFILE%\.chat-tts-reader\config.json` directly for advanced settings.
+
+---
+
+## Platform Setup Notes
+
+### YouTube
+Just need the video ID or URL of your live stream.
+
+### Kick
+Kick blocks automated requests. The setup wizard will:
+1. Ask for your channel name
+2. Guide you to find your Chatroom ID (required for reliable connection)
+3. Optionally open a browser for authenticated login
+
+### TikTok
+Just need your TikTok username. Works when you're live.
+
+### Twitch (Optional)
+For auto-start when you go live:
+1. Create an app at [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps)
+2. Enter the Client ID during setup
+3. The app will poll Twitch and start automatically when your stream goes live
+
+---
+
+## Configuration
+
+All settings are stored in `%USERPROFILE%\.chat-tts-reader\config.json`
+
+### TTS Settings
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `engine` | `edge-tts` (neural) or `pyttsx3` (offline) | `edge-tts` |
+| `rate` | Speech rate (50-400 wpm) | `150` |
+| `volume` | Volume (0.0-1.0) | `1.0` |
+| `edge_voice` | Voice for Edge TTS | `en-US-GuyNeural` |
+
+### Popular Edge TTS Voices
+- `en-US-GuyNeural` (male, US)
+- `en-US-JennyNeural` (female, US)
+- `en-US-AriaNeural` (female, US)
+- `en-GB-RyanNeural` (male, UK)
+- `en-AU-WilliamNeural` (male, Australian)
 
 ### Auto-Start with Twitch Live Detection
 

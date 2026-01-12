@@ -305,3 +305,91 @@ def extract_video_id(url: str) -> Optional[str]:
             return match.group(1)
     
     return None
+
+
+async def get_live_stream_from_channel(channel_identifier: str) -> Optional[str]:
+    """
+    Get the current live stream video ID from a YouTube channel.
+    
+    Args:
+        channel_identifier: Channel URL, handle (@username), or channel ID
+        
+    Returns:
+        Video ID of the current live stream, or None if not live
+    """
+    try:
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            }
+            
+            # Normalize channel identifier to URL
+            if channel_identifier.startswith('@'):
+                channel_url = f"https://www.youtube.com/{channel_identifier}/live"
+            elif channel_identifier.startswith('UC'):
+                channel_url = f"https://www.youtube.com/channel/{channel_identifier}/live"
+            elif 'youtube.com' in channel_identifier:
+                # Already a URL, append /live if needed
+                channel_url = channel_identifier.rstrip('/')
+                if not channel_url.endswith('/live'):
+                    channel_url += '/live'
+            else:
+                # Assume it's a handle without @
+                channel_url = f"https://www.youtube.com/@{channel_identifier}/live"
+            
+            logger.info(f"Checking for live stream at: {channel_url}")
+            
+            async with session.get(channel_url, headers=headers, allow_redirects=True) as response:
+                if response.status != 200:
+                    logger.warning(f"Channel page returned {response.status}")
+                    return None
+                
+                html = await response.text()
+                
+                # Check if redirected to a live video
+                final_url = str(response.url)
+                video_id = extract_video_id(final_url)
+                if video_id:
+                    # Verify it's actually live
+                    if '"isLive":true' in html or '"isLiveBroadcast":true' in html:
+                        logger.info(f"Found live stream: {video_id}")
+                        return video_id
+                
+                # Try to find live video ID in the page
+                # Look for canonical URL with video ID
+                canonical_match = re.search(r'<link rel="canonical" href="[^"]*[?&]v=([a-zA-Z0-9_-]{11})', html)
+                if canonical_match:
+                    video_id = canonical_match.group(1)
+                    if '"isLive":true' in html or '"isLiveBroadcast":true' in html:
+                        logger.info(f"Found live stream from canonical: {video_id}")
+                        return video_id
+                
+                # Look for video ID in ytInitialData
+                match = re.search(r'"videoId":\s*"([a-zA-Z0-9_-]{11})"', html)
+                if match:
+                    video_id = match.group(1)
+                    if '"isLive":true' in html or '"isLiveBroadcast":true' in html:
+                        logger.info(f"Found live stream from data: {video_id}")
+                        return video_id
+                
+                logger.info("No live stream found for this channel")
+                return None
+                
+    except Exception as e:
+        logger.error(f"Error checking channel for live stream: {e}")
+        return None
+
+
+def open_youtube_studio():
+    """Open YouTube Studio live streaming page in the default browser."""
+    import webbrowser
+    webbrowser.open("https://studio.youtube.com/channel/UC/livestreaming")
+
+
+def get_live_video_id_sync(channel_identifier: str) -> Optional[str]:
+    """Synchronous wrapper for get_live_stream_from_channel."""
+    try:
+        return asyncio.run(get_live_stream_from_channel(channel_identifier))
+    except:
+        return None
