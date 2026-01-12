@@ -1,17 +1,17 @@
-Chat TTS Reader Installation
-============================
+Chat TTS Reader v1.1.0 Installation
+====================================
 
 This will install Chat TTS Reader on your computer.
 
 FEATURES
 --------
 * Read YouTube, Kick, and TikTok live chat via text-to-speech
-* Automatic Twitch live detection (start when you go live)
+* YouTube auto-detect: Enter your channel once, finds live stream automatically
+* Kick browser login: Bypass Cloudflare blocking
+* Twitch live detection: Start when you go live (press ENTER to bypass)
 * High-quality Microsoft Edge neural voices
 * Windows SAPI voices (works offline)
 * Customizable message filters
-* Block specific users or words
-* Runs in background during your stream
 
 REQUIREMENTS
 ------------
@@ -21,13 +21,14 @@ REQUIREMENTS
 AFTER INSTALLATION
 ------------------
 1. Run "Configure" from the Start Menu to set up your platforms
-2. Run "Audio Test" to verify TTS is working
-3. Run "Chat TTS Reader" to start manually, or enable auto-start
+2. Run "Kick Login" if Kick chat isn't connecting
+3. Run "Audio Test" to verify TTS is working
+4. Run "Chat TTS Reader" to start
 
 IMPORTANT NOTES
 ---------------
-* YouTube/Kick/TikTok chat only works when you're actually live streaming
-* Kick.com may block requests due to anti-bot protection
-* TikTok requires you to be live for the connection to work
+* YouTube: Use channel mode to auto-detect your live stream each time
+* Kick: Use browser login if getting blocked, or set chatroom ID manually
+* TikTok: Must be live for connection to work
 
 Click Next to continue with the installation.

@@ -2,8 +2,8 @@
 ; Creates a professional Windows installer
 
 #define MyAppName "Chat TTS Reader"
-#define MyAppVersion "1.0.0"
-#define MyAppPublisher "CaedVT"
+#define MyAppVersion "1.1.0"
+#define MyAppPublisher "caedicious"
 #define MyAppURL "https://github.com/caedicious/Chat-TTS-Reader"
 #define MyAppExeName "ChatTTSReader.exe"
 
@@ -50,7 +50,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "startupicon"; Description: "Start automatically when Windows starts"; GroupDescription: "Startup:"; Flags: unchecked
-Name: "startupwaitforlive"; Description: "Wait for Twitch live before starting (recommended for streamers)"; GroupDescription: "Startup:"; Flags: unchecked exclusive
+Name: "startupwaitforlive"; Description: "Wait for Twitch live before starting (press ENTER to bypass)"; GroupDescription: "Startup:"; Flags: unchecked exclusive
 Name: "startupimmediate"; Description: "Start immediately on boot"; GroupDescription: "Startup:"; Flags: unchecked exclusive
 
 [Files]
@@ -83,8 +83,8 @@ Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: st
 Filename: "{app}\Configure.exe"; Description: "Configure stream platforms now"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; Clean up config directory
-Type: filesandordirs; Name: "{userappdata}\.chat-tts-reader"
+; Clean up config directory (includes config.json and kick_cookies.json)
+Type: filesandordirs; Name: "{userprofile}\.chat-tts-reader"
 
 [Code]
 // Custom wizard page for Twitch setup
@@ -99,6 +99,7 @@ begin
     'Twitch Live Detection',
     'Automatically start when you go live on Twitch',
     'Enter your Twitch information below. This allows the app to detect when you start streaming.' + #13#10 + #13#10 +
+    'You can always press ENTER to bypass and start immediately.' + #13#10 + #13#10 +
     'To get a Client ID:' + #13#10 +
     '1. Go to dev.twitch.tv/console/apps' + #13#10 +
     '2. Register a new application' + #13#10 +
