@@ -84,7 +84,7 @@ Filename: "{app}\Configure.exe"; Description: "Configure stream platforms now"; 
 
 [UninstallDelete]
 ; Clean up config directory (includes config.json and kick_cookies.json)
-Type: filesandordirs; Name: "{userprofile}\.chat-tts-reader"
+Type: filesandordirs; Name: "{%USERPROFILE}\.chat-tts-reader"
 
 [Code]
 // Custom wizard page for Twitch setup
