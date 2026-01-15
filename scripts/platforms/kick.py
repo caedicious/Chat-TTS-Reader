@@ -88,7 +88,19 @@ class KickChatHandler(BaseChatHandler):
         
         try:
             async with aiohttp.ClientSession() as session:
-                # Try v2 API first (more common)
+                # Try chatroom endpoint first (most direct)
+                url = f"https://kick.com/api/v2/channels/{self.channel_name}/chatroom"
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        self._chatroom_id = data.get('id')
+                        if self._chatroom_id:
+                            logger.info(f"Kick chatroom ID (auto-detected): {self._chatroom_id}")
+                            return True
+                    elif response.status == 403:
+                        logger.warning("Kick API returned 403 (blocked) - trying with cookies...")
+                
+                # Try v2 channels API
                 url = f"https://kick.com/api/v2/channels/{self.channel_name}"
                 async with session.get(url, headers=headers) as response:
                     if response.status == 200:
@@ -137,6 +149,7 @@ class KickChatHandler(BaseChatHandler):
                             return True
                 
                 logger.error("Could not find Kick chatroom ID")
+                logger.error("Please enter chatroom ID manually in Configure.bat or log in to Kick")
                 return False
                 
         except Exception as e:

@@ -24,6 +24,7 @@ class YouTubeConfig:
     """YouTube Live configuration."""
     enabled: bool = True
     video_id: str = ""  # The live stream video ID (from URL)
+    channel: str = ""  # YouTube channel for auto-detection (@handle or URL)
     channel: str = ""  # Channel handle (@username) for auto-detection
     
     
