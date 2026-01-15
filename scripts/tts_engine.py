@@ -126,7 +126,7 @@ class EdgeTTSEngine(BaseTTSEngine):
                 logger.info(f"Audio device requested: {self.audio_device}")
                 logger.info("Note: pygame uses system default. Use Windows Sound settings to change default.")
             
-            pygame.mixer.init(frequency=24000, size=-16, channels=1, buffer=2048)
+            pygame.mixer.init(frequency=24000, size=-16, channels=1, buffer=1024)
             self._pygame_initialized = True
             logger.info("Pygame mixer initialized for audio playback")
             
@@ -228,9 +228,9 @@ class EdgeTTSEngine(BaseTTSEngine):
                 pygame.mixer.music.set_volume(self.volume)
                 pygame.mixer.music.play()
                 
-                # Wait for playback to finish
+                # Wait for playback to finish (50ms polling for responsiveness)
                 while pygame.mixer.music.get_busy():
-                    pygame.time.wait(100)
+                    pygame.time.wait(50)
                     
             except Exception as e:
                 logger.error(f"Pygame playback error: {e}")

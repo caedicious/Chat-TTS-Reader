@@ -1,6 +1,7 @@
 """
 Chat TTS Reader - Core Application
 The main TTS reader engine. Usually called via run.py.
+Optimized for low CPU usage alongside streaming software.
 """
 
 import asyncio
@@ -8,7 +9,7 @@ import logging
 import re
 import sys
 import os
-from typing import List, Optional
+from typing import List, Optional, Set
 
 # Add scripts directory to path
 scripts_dir = os.path.dirname(os.path.abspath(__file__))
@@ -30,12 +31,17 @@ from platforms.youtube import extract_video_id, get_live_video_id_sync
 
 colorama_init()
 
+# Reduce logging to WARNING for less CPU overhead
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
     datefmt='%H:%M:%S'
 )
 logger = logging.getLogger(__name__)
+
+# Pre-compiled regex patterns for efficiency
+LINK_PATTERN = re.compile(r'https?://|www\.', re.IGNORECASE)
+USERNAME_CLEAN_PATTERN = re.compile(r'[_\-\d]+')
 
 
 class ChatTTSReader:
@@ -47,6 +53,15 @@ class ChatTTSReader:
         self.tts_queue: Optional[TTSQueue] = None
         self.handlers: List[BaseChatHandler] = []
         self._running = False
+        # Cached filter sets for O(1) lookup
+        self._blocked_users: Set[str] = set()
+        self._blocked_words: Set[str] = set()
+        
+    def _cache_filters(self):
+        """Cache filter lists as sets for faster lookup."""
+        filters = self.config.filters
+        self._blocked_users = {u.lower() for u in filters.blocked_users}
+        self._blocked_words = {w.lower() for w in filters.blocked_words}
         
     def _create_handlers(self) -> List[BaseChatHandler]:
         """Create chat handlers based on configuration."""
@@ -60,20 +75,13 @@ class ChatTTSReader:
                 video_id = extract_video_id(self.config.youtube.video_id)
             
             if not video_id and self.config.youtube.channel:
-                logger.info(f"Auto-detecting live stream for channel: {self.config.youtube.channel}")
+                print(f"  {Fore.YELLOW}Auto-detecting YouTube live stream...{Style.RESET_ALL}")
                 video_id = get_live_video_id_sync(self.config.youtube.channel)
                 if video_id:
-                    logger.info(f"Found live stream: {video_id}")
-                else:
-                    logger.warning(f"No live stream found for channel: {self.config.youtube.channel}")
+                    print(f"  {Fore.GREEN}✓ Found: {video_id}{Style.RESET_ALL}")
             
             if video_id:
                 handlers.append(YouTubeChatHandler(video_id))
-                logger.info(f"YouTube handler configured: {video_id}")
-            elif self.config.youtube.video_id:
-                logger.warning(f"Invalid YouTube video ID: {self.config.youtube.video_id}")
-            elif self.config.youtube.channel:
-                logger.warning(f"Could not find live stream for: {self.config.youtube.channel}")
         
         # Kick handler
         if self.config.kick.enabled and self.config.kick.channel_name:
@@ -81,37 +89,41 @@ class ChatTTSReader:
                 self.config.kick.channel_name,
                 chatroom_id=self.config.kick.chatroom_id
             ))
-            logger.info(f"Kick handler configured: {self.config.kick.channel_name}")
         
         # TikTok handler
         if self.config.tiktok.enabled and self.config.tiktok.username:
             handlers.append(TikTokChatHandler(self.config.tiktok.username))
-            logger.info(f"TikTok handler configured: @{self.config.tiktok.username}")
         
         return handlers
     
     def _filter_message(self, message: ChatMessage) -> bool:
-        """Check if a message should be read."""
+        """Check if a message should be read. Optimized with cached sets."""
         filters = self.config.filters
         text = message.message
+        text_len = len(text)
         
-        if len(text) < filters.min_length or len(text) > filters.max_length:
+        # Length check (fastest)
+        if text_len < filters.min_length or text_len > filters.max_length:
             return False
         
-        if filters.ignore_commands and text.startswith('!'):
+        # Command check (fast string operation)
+        if filters.ignore_commands and text[0] == '!':
             return False
         
-        if filters.ignore_links:
-            if re.search(r'https?://|www\.', text, re.IGNORECASE):
-                return False
-        
-        if message.username.lower() in [u.lower() for u in filters.blocked_users]:
+        # Link check (pre-compiled regex)
+        if filters.ignore_links and LINK_PATTERN.search(text):
             return False
         
-        text_lower = text.lower()
-        for word in filters.blocked_words:
-            if word.lower() in text_lower:
-                return False
+        # Blocked user check (O(1) set lookup)
+        if message.username.lower() in self._blocked_users:
+            return False
+        
+        # Blocked words check (O(n) but with set)
+        if self._blocked_words:
+            text_lower = text.lower()
+            for word in self._blocked_words:
+                if word in text_lower:
+                    return False
         
         return True
     
@@ -123,7 +135,7 @@ class ChatTTSReader:
             parts.append(message.platform + ",")
         
         if self.config.announce_username:
-            username = re.sub(r'[_\-\d]+', ' ', message.username).strip()
+            username = USERNAME_CLEAN_PATTERN.sub(' ', message.username).strip()
             if username:
                 parts.append(username + " says,")
         
@@ -159,6 +171,9 @@ class ChatTTSReader:
         """Start the application."""
         self.config = self.config_manager.load()
         
+        # Cache filters for faster lookup
+        self._cache_filters()
+        
         # Create TTS engine
         tts_config = self.config.tts
         try:
@@ -170,7 +185,7 @@ class ChatTTSReader:
             )
             self.tts_queue = TTSQueue(engine, max_size=self.config.queue_max_size)
             await self.tts_queue.start()
-            logger.info(f"TTS engine started: {tts_config.engine}")
+            print(f"  {Fore.GREEN}✓ TTS engine: {tts_config.engine}{Style.RESET_ALL}")
         except Exception as e:
             logger.error(f"Failed to start TTS engine: {e}")
             print(f"\n{Fore.YELLOW}TTS engine failed. Messages displayed but not spoken.{Style.RESET_ALL}\n")
