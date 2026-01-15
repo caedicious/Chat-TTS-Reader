@@ -165,11 +165,11 @@ class KickChatHandler(BaseChatHandler):
                 logger.info("Kick may be blocking requests. Try again later or check the channel name.")
                 return False
             
-            # Connect to Pusher WebSocket
+            # Connect to Pusher WebSocket with longer ping interval for efficiency
             self._ws = await websockets.connect(
                 self.PUSHER_URL,
-                ping_interval=30,
-                ping_timeout=10,
+                ping_interval=60,
+                ping_timeout=20,
                 origin='https://kick.com',
                 user_agent_header='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             )

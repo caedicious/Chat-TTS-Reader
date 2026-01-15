@@ -74,7 +74,7 @@ class AppConfig:
     filters: FilterConfig = field(default_factory=FilterConfig)
     announce_platform: bool = True  # Say which platform the message is from
     announce_username: bool = True  # Say who sent the message
-    queue_max_size: int = 50  # Max messages in TTS queue
+    queue_max_size: int = 20  # Max messages in TTS queue
 
 
 class ConfigManager:

@@ -1,6 +1,7 @@
 """
 Text-to-Speech engine for Chat TTS Reader.
 Supports pyttsx3 (Windows SAPI) and edge-tts (Microsoft Edge voices).
+Optimized for low CPU/RAM usage.
 """
 
 import asyncio
@@ -8,21 +9,25 @@ import logging
 import queue
 import threading
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Optional
 import tempfile
 import os
 
+# Disable pygame welcome message and debug output
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
 logger = logging.getLogger(__name__)
 
 
-@dataclass
 class TTSMessage:
-    """A message to be spoken."""
-    text: str
-    platform: str = ""
-    username: str = ""
-    priority: int = 0  # Lower = higher priority
+    """A message to be spoken. Uses __slots__ for memory efficiency."""
+    __slots__ = ('text', 'platform', 'username', 'priority')
+    
+    def __init__(self, text: str, platform: str = "", username: str = "", priority: int = 0):
+        self.text = text
+        self.platform = platform
+        self.username = username
+        self.priority = priority
 
 
 class BaseTTSEngine(ABC):
@@ -126,7 +131,7 @@ class EdgeTTSEngine(BaseTTSEngine):
                 logger.info(f"Audio device requested: {self.audio_device}")
                 logger.info("Note: pygame uses system default. Use Windows Sound settings to change default.")
             
-            pygame.mixer.init(frequency=24000, size=-16, channels=1, buffer=1024)
+            pygame.mixer.init(frequency=22050, size=-16, channels=1, buffer=512)
             self._pygame_initialized = True
             logger.info("Pygame mixer initialized for audio playback")
             
@@ -277,8 +282,9 @@ class TTSQueue:
     Manages a queue of messages to be spoken.
     Ensures messages are spoken in order and handles rate limiting.
     """
+    __slots__ = ('engine', 'max_size', '_queue', '_running', '_task')
     
-    def __init__(self, engine: BaseTTSEngine, max_size: int = 50):
+    def __init__(self, engine: BaseTTSEngine, max_size: int = 20):
         self.engine = engine
         self.max_size = max_size
         self._queue: asyncio.Queue[TTSMessage] = asyncio.Queue(maxsize=max_size)
@@ -291,20 +297,20 @@ class TTSQueue:
             self._queue.put_nowait(message)
             return True
         except asyncio.QueueFull:
-            logger.warning("TTS queue full, dropping message")
             return False
     
     async def _process_queue(self):
         """Process messages from the queue."""
         while self._running:
             try:
-                message = await asyncio.wait_for(self._queue.get(), timeout=1.0)
+                message = await asyncio.wait_for(self._queue.get(), timeout=5.0)
                 try:
                     await self.engine.speak(message)
                 except Exception as e:
                     logger.error(f"TTS error: {e}")
                 finally:
                     self._queue.task_done()
+                    del message  # Help garbage collector
             except asyncio.TimeoutError:
                 continue
             except asyncio.CancelledError:

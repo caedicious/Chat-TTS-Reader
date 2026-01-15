@@ -3,28 +3,25 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable, Optional, Awaitable
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
 class ChatMessage:
-    """Represents a chat message from any platform."""
-    platform: str
-    username: str
-    message: str
-    timestamp: datetime
-    user_id: str = ""
-    is_moderator: bool = False
-    is_subscriber: bool = False
-    badges: list = None
+    """Represents a chat message from any platform. Uses __slots__ for memory efficiency."""
+    __slots__ = ('platform', 'username', 'message', 'timestamp', 'user_id', 'is_moderator', 'is_subscriber')
     
-    def __post_init__(self):
-        if self.badges is None:
-            self.badges = []
+    def __init__(self, platform: str, username: str, message: str, timestamp: datetime,
+                 user_id: str = "", is_moderator: bool = False, is_subscriber: bool = False, **kwargs):
+        self.platform = platform
+        self.username = username
+        self.message = message
+        self.timestamp = timestamp
+        self.user_id = user_id
+        self.is_moderator = is_moderator
+        self.is_subscriber = is_subscriber
 
 
 # Type alias for message callbacks
@@ -33,6 +30,7 @@ MessageCallback = Callable[[ChatMessage], Awaitable[None]]
 
 class BaseChatHandler(ABC):
     """Abstract base class for platform chat handlers."""
+    __slots__ = ('platform_name', '_running', '_callback', '_task')
     
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
@@ -73,15 +71,11 @@ class BaseChatHandler(ABC):
     async def start(self):
         """Start listening for chat messages."""
         if self._running:
-            logger.warning(f"{self.platform_name} handler already running")
             return
             
         if await self.connect():
             self._running = True
             self._task = asyncio.create_task(self._listen_loop())
-            logger.info(f"{self.platform_name} chat handler started")
-        else:
-            logger.error(f"Failed to connect to {self.platform_name}")
     
     async def stop(self):
         """Stop listening for chat messages."""
@@ -93,7 +87,6 @@ class BaseChatHandler(ABC):
             except asyncio.CancelledError:
                 pass
         await self.disconnect()
-        logger.info(f"{self.platform_name} chat handler stopped")
     
     @property
     def is_running(self) -> bool:

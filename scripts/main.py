@@ -210,7 +210,7 @@ class ChatTTSReader:
         
         try:
             while self._running:
-                await asyncio.sleep(1)
+                await asyncio.sleep(5)  # Longer sleep = less CPU wake-ups
         except asyncio.CancelledError:
             pass
     
