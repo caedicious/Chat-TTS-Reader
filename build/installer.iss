@@ -9,7 +9,10 @@
 
 [Setup]
 ; Application info
-AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
+; This must stay unique to Chat TTS Reader. 1.1.0 shipped with a placeholder
+; AppId that OBS BRB Shorts also uses, so Windows treated them as one program
+; (shared install folder and Add/Remove Programs entry).
+AppId={{8CC96A6C-8BE4-4D7F-9301-BD4B1F7E520A}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
@@ -92,6 +95,37 @@ var
   TwitchPage: TInputQueryWizardPage;
   TwitchSetupCheckbox: TNewCheckBox;
 
+// Chat TTS Reader 1.1.0 registered itself under an AppId shared with OBS BRB
+// Shorts. Now that this app has its own AppId, that old registration is
+// removed when it points at this install folder, so Add/Remove Programs
+// doesn't list the app twice. A registration pointing anywhere else is left
+// alone: it belongs to OBS BRB Shorts.
+const
+  OldSharedAppIdKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}_is1';
+
+procedure RemoveStaleRegistration(RootKey: Integer);
+var
+  AppPath, UninstallExe: String;
+begin
+  if not RegQueryStringValue(RootKey, OldSharedAppIdKey, 'Inno Setup: App Path', AppPath) then
+    Exit;
+  if CompareText(RemoveBackslashUnlessRoot(AppPath), RemoveBackslashUnlessRoot(ExpandConstant('{app}'))) <> 0 then
+    Exit;
+  // Its uninstaller is a leftover file in our folder (never our own uninstaller)
+  if RegQueryStringValue(RootKey, OldSharedAppIdKey, 'UninstallString', UninstallExe) then
+  begin
+    UninstallExe := RemoveQuotes(UninstallExe);
+    if (CompareText(UninstallExe, ExpandConstant('{uninstallexe}')) <> 0) and
+       (Pos(Lowercase(AddBackslash(ExpandConstant('{app}'))), Lowercase(UninstallExe)) = 1) then
+    begin
+      DeleteFile(UninstallExe);
+      DeleteFile(ChangeFileExt(UninstallExe, '.dat'));
+    end;
+  end;
+  if RegDeleteKeyIncludingSubkeys(RootKey, OldSharedAppIdKey) then
+    Log('Removed the old shared-AppId registration that pointed at ' + AppPath);
+end;
+
 procedure InitializeWizard;
 begin
   // Create Twitch setup page
@@ -127,6 +161,10 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
+    // Drop a 1.1.0 registration under the AppId shared with OBS BRB Shorts
+    RemoveStaleRegistration(HKLM);
+    RemoveStaleRegistration(HKCU);
+
     // Save Twitch credentials if provided
     ClientID := TwitchPage.Values[0];
     Username := TwitchPage.Values[1];
