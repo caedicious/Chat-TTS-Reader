@@ -74,27 +74,33 @@ After building:
 
 ```
 Chat-TTS-Reader/
-├── main.py              # Main application
-├── configure.py         # Configuration wizard
-├── audio_test.py        # Audio testing utility
-├── wait_for_live.py     # Twitch live detection
-├── config.py            # Configuration management
-├── tts_engine.py        # TTS engine abstraction
+├── VERSION              # The version; the build and installer read it
 ├── requirements.txt     # Python dependencies
-├── platforms/           # Chat platform handlers
-│   ├── youtube.py
-│   ├── kick.py
-│   ├── tiktok.py
-│   └── base.py
+├── scripts/
+│   ├── main.py          # Main application        -> ChatTTSReader.exe
+│   ├── run.py           # Wait for Twitch live, then run -> WaitForLive.exe
+│   ├── configure.py     # Configuration wizard    -> Configure.exe
+│   ├── kick_auth.py     # Kick browser login      -> KickLogin.exe
+│   ├── test.py          # Connection & audio test -> AudioTest.exe
+│   ├── config.py        # Configuration management
+│   ├── tts_engine.py    # TTS engine abstraction
+│   └── platforms/       # Chat platform handlers
+│       ├── youtube.py
+│       ├── kick.py
+│       ├── tiktok.py
+│       └── base.py
 ├── assets/              # Icons and resources
 │   └── icon.ico         # (add your own icon here)
 └── build/               # Build scripts
-    ├── build.ps1        # PowerShell build script
-    ├── build.bat        # Batch build script
+    ├── build.ps1        # The build script
+    ├── build.bat        # Runs build.ps1
     ├── installer.iss    # Inno Setup script
     ├── LICENSE.txt
     └── INSTALL_INFO.txt
 ```
+
+The five executables are built separately and merged into one folder
+(`build/dist/ChatTTSReader-Final`) that shares a single `_internal`.
 
 ---
 
@@ -128,11 +134,11 @@ To use a custom icon:
 
 ## Release Checklist
 
-1. Update version in `VERSION` file
-2. Update version in `build/installer.iss`
-3. Run full build: `.\build.ps1`
-4. Test the portable version
-5. Test the installer
-6. Create GitHub release with:
+1. Update the version in the `VERSION` file (the installer reads it; the
+   banner in `scripts/run.py` is the one other place it appears)
+2. Run the full build: `.\build.ps1`
+3. Test the portable version
+4. Test the installer
+5. Create a GitHub release with both files from `build/installer_output/`:
    - `ChatTTSReader-Setup-x.x.x.exe` (installer)
    - `ChatTTSReader-Portable-x.x.x.zip` (zipped portable folder)

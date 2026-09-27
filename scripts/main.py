@@ -29,6 +29,16 @@ from platforms import (
 )
 from platforms.youtube import extract_video_id, get_live_video_id_sync
 
+# Status lines use check marks and other non-ASCII characters. If output isn't
+# a UTF-8 console the default encoder raises, and inside start() that used to
+# look like a TTS failure; replace what can't be encoded instead.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(errors="replace")
+        except Exception:
+            pass
+
 colorama_init()
 
 # Reduce logging to WARNING for less CPU overhead

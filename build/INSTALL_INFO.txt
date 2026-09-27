@@ -1,5 +1,5 @@
-Chat TTS Reader v1.1.0 Installation
-====================================
+Chat TTS Reader Installation
+============================
 
 This will install Chat TTS Reader on your computer.
 
@@ -22,8 +22,9 @@ AFTER INSTALLATION
 ------------------
 1. Run "Configure" from the Start Menu to set up your platforms
 2. Run "Kick Login" if Kick chat isn't connecting
-3. Run "Audio Test" to verify TTS is working
-4. Run "Chat TTS Reader" to start
+3. Run "Test Connections and Audio" to check your platforms and TTS
+4. Run "Chat TTS Reader" to start right away, or "Wait For Live" to
+   start automatically when you go live on Twitch
 
 IMPORTANT NOTES
 ---------------

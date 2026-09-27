@@ -11,6 +11,15 @@ import webbrowser
 scripts_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, scripts_dir)
 
+# The wizard prints box-drawing characters. If output isn't a UTF-8 console
+# the default encoder raises; replace what can't be encoded instead.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(errors="replace")
+        except Exception:
+            pass
+
 from colorama import init as colorama_init, Fore, Style
 colorama_init()
 

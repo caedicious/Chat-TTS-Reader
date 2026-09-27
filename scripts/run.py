@@ -25,13 +25,23 @@ if sys.platform == 'win32':
 scripts_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, scripts_dir)
 
+# The banners use box-drawing and emoji characters. If output isn't a UTF-8
+# console (redirected to a file, some terminals) the default encoder raises;
+# replace what can't be encoded instead of crashing.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(errors="replace")
+        except Exception:
+            pass
+
 from colorama import init as colorama_init, Fore, Style
 colorama_init()
 
 
 def print_banner():
     print(f"\n{Fore.CYAN}╔══════════════════════════════════════╗{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}║        Chat TTS Reader v1.1.1        ║{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}║        Chat TTS Reader v1.1.4        ║{Style.RESET_ALL}")
     print(f"{Fore.CYAN}╚══════════════════════════════════════╝{Style.RESET_ALL}\n")
 
 

@@ -2,7 +2,11 @@
 ; Creates a professional Windows installer
 
 #define MyAppName "Chat TTS Reader"
-#define MyAppVersion "1.1.0"
+; build.ps1 passes the version from the VERSION file (/DMyAppVersion=x.y.z);
+; this default only applies when compiling the script by hand
+#ifndef MyAppVersion
+  #define MyAppVersion "1.1.4"
+#endif
 #define MyAppPublisher "caedicious"
 #define MyAppURL "https://github.com/caedicious/Chat-TTS-Reader"
 #define MyAppExeName "ChatTTSReader.exe"
@@ -68,7 +72,7 @@ Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Configure"; Filename: "{app}\Configure.exe"
 Name: "{group}\Kick Login"; Filename: "{app}\KickLogin.exe"
-Name: "{group}\Audio Test"; Filename: "{app}\AudioTest.exe"
+Name: "{group}\Test Connections and Audio"; Filename: "{app}\AudioTest.exe"
 Name: "{group}\Wait For Live"; Filename: "{app}\WaitForLive.exe"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 

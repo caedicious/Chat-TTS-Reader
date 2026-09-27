@@ -40,7 +40,7 @@ Perfect for streamers who want to hear chat messages without looking away from g
 
 1. **Download** the latest release from [Releases](../../releases)
 2. **Extract** to any folder
-3. **Run `Setup.bat`**
+3. **Run `install.bat`**
 
 That's it! The setup wizard will guide you through:
 - Installing all dependencies
@@ -54,12 +54,12 @@ That's it! The setup wizard will guide you through:
 
 ### Starting the App
 
-- **Manual start:** Double-click `start-chat-tts.bat`
+- **Manual start:** Double-click `Run.bat`
 - **Auto-start:** If configured, it runs when Windows starts (or when you go live on Twitch)
 
 ### Reconfiguring
 
-Run `Setup.bat` again to change any settings.
+Run `configure.bat` to change any settings.
 
 ### Quick Config Edit
 
@@ -119,9 +119,9 @@ If you enabled this during installation, Chat TTS Reader will:
 
 | Script | Description |
 |--------|-------------|
-| `start-chat-tts.bat` | Start the TTS reader manually |
+| `Run.bat` | Start the TTS reader manually |
 | `configure.bat` | Change platform settings |
-| `test-audio.bat` | Test audio output |
+| `Test.bat` | Test platform connections and audio output |
 | `uninstall.bat` | Remove from system |
 
 ---
@@ -203,7 +203,7 @@ To route TTS to a separate audio source in OBS:
 
 ### Troubleshooting Audio
 
-Run `test-audio.bat` to diagnose audio issues.
+Run `Test.bat` to diagnose audio issues.
 
 **No sound?**
 - Check Windows Volume Mixer (right-click speaker → Volume Mixer)
@@ -232,7 +232,7 @@ Run `test-audio.bat` to diagnose audio issues.
 - The app will wait and retry automatically
 
 ### TTS: No sound
-- Run `test-audio.bat` to diagnose
+- Run `Test.bat` to diagnose
 - Check Windows Volume Mixer
 - Try switching TTS engines in configuration
 
@@ -243,22 +243,25 @@ Run `test-audio.bat` to diagnose audio issues.
 ```
 Chat-TTS-Reader/
 ├── install.bat          # Run this first!
-├── start-chat-tts.bat   # Start manually
+├── Run.bat              # Start manually
 ├── configure.bat        # Change settings
-├── test-audio.bat       # Test audio
+├── Test.bat             # Test connections and audio
 ├── uninstall.bat        # Remove from system
 ├── requirements.txt     # Python dependencies
-├── main.py              # Main application
-├── config.py            # Configuration management
-├── configure.py         # Configuration wizard
-├── tts_engine.py        # TTS engines
-├── audio_test.py        # Audio testing utility
-├── wait_for_live.py     # Twitch live detection
-└── platforms/           # Chat platform handlers
-    ├── base.py
-    ├── youtube.py
-    ├── kick.py
-    └── tiktok.py
+├── VERSION              # Current version
+└── scripts/
+    ├── main.py          # Main application
+    ├── run.py           # Waits for Twitch live, then starts (ENTER to skip)
+    ├── configure.py     # Configuration wizard
+    ├── kick_auth.py     # Kick browser login
+    ├── test.py          # Connection and audio test
+    ├── config.py        # Configuration management
+    ├── tts_engine.py    # TTS engines
+    └── platforms/       # Chat platform handlers
+        ├── base.py
+        ├── youtube.py
+        ├── kick.py
+        └── tiktok.py
 ```
 
 ---

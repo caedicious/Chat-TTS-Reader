@@ -18,9 +18,8 @@ build/Configure/
 build/WaitForLive/
 build/KickLogin/
 
-# PyInstaller generated spec files (keep build_all.spec)
+# PyInstaller generated spec files
 *.spec
-!build/build_all.spec
 
 # Inno Setup output
 *.exe
